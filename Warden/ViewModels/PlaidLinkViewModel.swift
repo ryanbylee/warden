@@ -69,14 +69,16 @@ final class PlaidLinkViewModel {
         isShowingLink = false
     }
 
-    // MARK: - Sync (Phase 4 will wire in TransactionImporter)
+    // MARK: - Sync
 
     func syncTransactions(context: ModelContext) async {
         guard isConnected, !connectedItemId.isEmpty else { return }
         isSyncing = true
         errorMessage = nil
         do {
-            _ = try await plaidService.syncTransactions(itemId: connectedItemId)
+            let response = try await plaidService.syncTransactions(itemId: connectedItemId)
+            let importer = TransactionImporter(context: context)
+            try importer.apply(response)
         } catch {
             errorMessage = error.localizedDescription
         }

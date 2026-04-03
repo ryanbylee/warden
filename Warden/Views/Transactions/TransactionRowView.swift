@@ -28,6 +28,11 @@ struct TransactionRowView: View {
                     .font(.subheadline)
                     .fontWeight(.medium)
                 HStack(spacing: 4) {
+                    if transaction.source == "plaid" {
+                        Image(systemName: "building.columns")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                     if let category = transaction.category {
                         Text(category.name)
                             .font(.caption)

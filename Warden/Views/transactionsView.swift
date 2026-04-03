@@ -9,6 +9,7 @@ import SwiftData
 struct TransactionsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = TransactionsViewModel()
+    @State private var plaidViewModel = PlaidLinkViewModel()
 
     var body: some View {
         NavigationStack {
@@ -34,6 +35,12 @@ struct TransactionsView: View {
                         systemImage: "list.bullet",
                         description: Text("Add your first transaction using the + button.")
                     )
+                }
+            }
+            .refreshable {
+                if plaidViewModel.isConnected {
+                    await plaidViewModel.syncTransactions(context: modelContext)
+                    viewModel.loadTransactions(context: modelContext)
                 }
             }
             .scrollEdgeEffectStyle(.soft, for: .top)
