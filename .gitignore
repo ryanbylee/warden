@@ -23,7 +23,6 @@ build/
 .build/
 Packages/
 Package.pins
-Package.resolved
 .swiftpm/
 
 # Secrets — never commit real credentials
