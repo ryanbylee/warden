@@ -14,18 +14,20 @@ final class PlaidService {
 
     // MARK: - Private
 
-    /// Returns the Authorization header for the current user session.
-    /// Throws `NetworkError.authFailed` if no valid session exists.
-    private func authHeader() async throws -> [String: String] {
-        let session = try await supabase.client.auth.session
-        return ["Authorization": "Bearer \(session.accessToken)"]
+    /// Returns the Authorization header from the last sign-in token.
+    /// Throws `NetworkError.authFailed` if `signInAnonymously()` was never called.
+    private func authHeader() throws -> [String: String] {
+        guard let token = supabase.accessToken else {
+            throw NetworkError.authFailed("Not authenticated — call signInAnonymously() first")
+        }
+        return ["Authorization": "Bearer \(token)"]
     }
 
     // MARK: - Create Link Token
 
     func createLinkToken() async throws -> String {
         do {
-            let headers = try await authHeader()
+            let headers = try authHeader()
             let response: LinkTokenResponse = try await supabase.client.functions
                 .invoke("create-link-token", options: .init(method: .post, headers: headers))
             return response.linkToken
@@ -48,7 +50,7 @@ final class PlaidService {
             }
         }
         do {
-            let headers = try await authHeader()
+            let headers = try authHeader()
             let response: ExchangeTokenResponse = try await supabase.client.functions
                 .invoke("exchange-public-token", options: .init(method: .post, headers: headers, body: Body(publicToken: publicToken, institutionName: institutionName)))
             return response.itemId
@@ -69,7 +71,7 @@ final class PlaidService {
             }
         }
         do {
-            let headers = try await authHeader()
+            let headers = try authHeader()
             let response: PlaidSyncResponse = try await supabase.client.functions
                 .invoke("sync-transactions", options: .init(method: .post, headers: headers, body: Body(itemId: itemId)))
             return response

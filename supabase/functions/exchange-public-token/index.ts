@@ -17,16 +17,23 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Missing authorization header" }, { status: 401 });
     }
 
-    const supabase = createClient(
+    // Plain client for JWT verification (getUser requires no global auth header)
+    const anonClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
     );
-
     const jwt = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
+    const { data: { user }, error: authError } = await anonClient.auth.getUser(jwt);
     if (authError || !user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // User-context client for DB operations so RLS policies are satisfied
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
 
     const { public_token, institution_name } = await req.json();
     if (!public_token) {

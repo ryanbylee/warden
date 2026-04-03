@@ -17,16 +17,21 @@ Deno.serve(async (req) => {
       return Response.json({ error: "Missing authorization header" }, { status: 401 });
     }
 
-    const supabase = createClient(
+    const anonClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
     );
-
     const jwt = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt);
+    const { data: { user }, error: authError } = await anonClient.auth.getUser(jwt);
     if (authError || !user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } },
+    );
 
     const { item_id } = await req.json();
     if (!item_id) {

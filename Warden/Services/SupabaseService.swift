@@ -11,6 +11,9 @@ final class SupabaseService {
     static let shared = SupabaseService()
 
     let client: SupabaseClient
+    /// Access token captured directly from the last successful sign-in or refresh.
+    /// Using this instead of re-reading client.auth.session avoids SDK storage issues.
+    private(set) var accessToken: String? = nil
 
     private init() {
         client = SupabaseClient(
@@ -19,17 +22,21 @@ final class SupabaseService {
         )
     }
 
-    /// Signs in anonymously. Validates any existing session against the server first.
-    /// If the cached session is stale or invalid, clears it and creates a fresh anonymous session.
+    /// Signs in anonymously and stores the access token directly from the response.
+    /// Safe to call repeatedly — refreshes if a valid session already exists.
     func signInAnonymously() async throws {
         if let existingSession = try? await client.auth.session {
-            // Refresh against the server to confirm the session is still valid
-            if (try? await client.auth.refreshSession(refreshToken: existingSession.refreshToken)) != nil {
+            do {
+                let refreshed = try await client.auth.refreshSession(refreshToken: existingSession.refreshToken)
+                accessToken = refreshed.accessToken
                 return
+            } catch {
+                // Stale session — fall through to fresh sign-in
+                try? await client.auth.signOut()
+                accessToken = nil
             }
-            // Stale session — clear it before creating a new one
-            try? await client.auth.signOut()
         }
-        try await client.auth.signInAnonymously()
+        let session = try await client.auth.signInAnonymously()
+        accessToken = session.accessToken
     }
 }
