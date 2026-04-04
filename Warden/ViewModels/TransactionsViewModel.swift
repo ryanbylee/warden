@@ -7,6 +7,12 @@ import Foundation
 import SwiftData
 import Observation
 
+struct RuleSuggestion: Identifiable {
+    let id = UUID()
+    let merchantName: String
+    let category: Category
+}
+
 @Observable
 final class TransactionsViewModel {
     var transactions: [Transaction] = []
@@ -15,6 +21,7 @@ final class TransactionsViewModel {
     var selectedCategory: Category? = nil
     var showingAddForm: Bool = false
     var transactionToEdit: Transaction? = nil
+    var pendingRuleSuggestion: RuleSuggestion? = nil
 
     var filteredTransactions: [Transaction] {
         transactions.filter { tx in
@@ -53,5 +60,34 @@ final class TransactionsViewModel {
         context.delete(transaction)
         try? context.save()
         loadTransactions(context: context)
+    }
+
+    func recategorizeTransaction(_ transaction: Transaction, to category: Category, context: ModelContext) {
+        transaction.category = category
+        try? context.save()
+        loadTransactions(context: context)
+
+        if transaction.source == "plaid" {
+            pendingRuleSuggestion = RuleSuggestion(
+                merchantName: transaction.descriptionText,
+                category: category
+            )
+        }
+    }
+
+    func createRuleFromSuggestion(context: ModelContext) {
+        guard let suggestion = pendingRuleSuggestion else { return }
+        let rule = CategoryRule(
+            merchantPattern: suggestion.merchantName,
+            isExactMatch: false,
+            category: suggestion.category
+        )
+        context.insert(rule)
+        try? context.save()
+        pendingRuleSuggestion = nil
+    }
+
+    func dismissRuleSuggestion() {
+        pendingRuleSuggestion = nil
     }
 }

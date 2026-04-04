@@ -44,6 +44,14 @@ struct SettingsView: View {
                     BankConnectionView()
                 }
 
+                Section("Category Rules") {
+                    NavigationLink {
+                        CategoryRulesView()
+                    } label: {
+                        Label("Manage Rules", systemImage: "arrow.triangle.swap")
+                    }
+                }
+
                 Section("Data") {
                     Button("Load Sample Data") {
                         showingSampleDataConfirm = true
@@ -84,5 +92,5 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
-        .modelContainer(for: [Transaction.self, Category.self, Budget.self], inMemory: true)
+        .modelContainer(for: [Transaction.self, Category.self, Budget.self, CategoryRule.self], inMemory: true)
 }

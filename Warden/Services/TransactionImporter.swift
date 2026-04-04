@@ -15,12 +15,13 @@ struct TransactionImporter {
 
     func apply(_ response: PlaidSyncResponse) throws {
         let categoryMap = try fetchCategoryMap()
+        let rules = try fetchRules()
 
         for plaidTx in response.added {
-            try insertIfNeeded(plaidTx, categoryMap: categoryMap)
+            try insertIfNeeded(plaidTx, categoryMap: categoryMap, rules: rules)
         }
         for plaidTx in response.modified {
-            try updateIfExists(plaidTx, categoryMap: categoryMap)
+            try updateIfExists(plaidTx, categoryMap: categoryMap, rules: rules)
         }
         for removed in response.removed {
             try deleteIfExists(transactionId: removed.transactionId)
@@ -36,7 +37,24 @@ struct TransactionImporter {
         return Dictionary(uniqueKeysWithValues: all.map { ($0.name, $0) })
     }
 
-    private func insertIfNeeded(_ plaidTx: PlaidTransaction, categoryMap: [String: Category]) throws {
+    private func fetchRules() throws -> [CategoryRule] {
+        // Fetch newest first, then stable-sort so exact matches take priority over contains matches
+        let descriptor = FetchDescriptor<CategoryRule>(
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        let all = try context.fetch(descriptor)
+        return all.sorted { $0.isExactMatch && !$1.isExactMatch }
+    }
+
+    private func matchRule(for description: String, rules: [CategoryRule]) -> CategoryRule? {
+        let lower = description.lowercased()
+        return rules.first { rule in
+            let pattern = rule.merchantPattern.lowercased()
+            return rule.isExactMatch ? lower == pattern : lower.contains(pattern)
+        }
+    }
+
+    private func insertIfNeeded(_ plaidTx: PlaidTransaction, categoryMap: [String: Category], rules: [CategoryRule]) throws {
         let txId: String? = plaidTx.transactionId
         var descriptor = FetchDescriptor<Transaction>(
             predicate: #Predicate { $0.plaidTransactionId == txId }
@@ -44,11 +62,11 @@ struct TransactionImporter {
         descriptor.fetchLimit = 1
         guard try context.fetch(descriptor).isEmpty else { return }
 
-        let tx = buildTransaction(from: plaidTx, categoryMap: categoryMap)
+        let tx = buildTransaction(from: plaidTx, categoryMap: categoryMap, rules: rules)
         context.insert(tx)
     }
 
-    private func updateIfExists(_ plaidTx: PlaidTransaction, categoryMap: [String: Category]) throws {
+    private func updateIfExists(_ plaidTx: PlaidTransaction, categoryMap: [String: Category], rules: [CategoryRule]) throws {
         let txId: String? = plaidTx.transactionId
         var descriptor = FetchDescriptor<Transaction>(
             predicate: #Predicate { $0.plaidTransactionId == txId }
@@ -56,12 +74,19 @@ struct TransactionImporter {
         descriptor.fetchLimit = 1
         guard let tx = try context.fetch(descriptor).first else { return }
 
-        let mapping = PlaidCategoryMapper.map(plaidTx.personalFinanceCategory)
-        tx.descriptionText = plaidTx.merchantName ?? plaidTx.name
+        let description = plaidTx.merchantName ?? plaidTx.name
+        tx.descriptionText = description
         tx.amount = abs(plaidTx.amount)
         tx.date = parseDate(plaidTx.date)
-        tx.type = resolveType(plaidAmount: plaidTx.amount, mappingType: mapping.transactionType)
-        tx.category = categoryMap[mapping.categoryName]
+
+        if let matchedRule = matchRule(for: description, rules: rules) {
+            tx.category = matchedRule.category
+            tx.type = plaidTx.amount >= 0 ? "expense" : "income"
+        } else {
+            let mapping = PlaidCategoryMapper.map(plaidTx.personalFinanceCategory)
+            tx.type = resolveType(plaidAmount: plaidTx.amount, mappingType: mapping.transactionType)
+            tx.category = categoryMap[mapping.categoryName]
+        }
     }
 
     private func deleteIfExists(transactionId: String) throws {
@@ -75,17 +100,29 @@ struct TransactionImporter {
         }
     }
 
-    private func buildTransaction(from plaidTx: PlaidTransaction, categoryMap: [String: Category]) -> Transaction {
-        let mapping = PlaidCategoryMapper.map(plaidTx.personalFinanceCategory)
+    private func buildTransaction(from plaidTx: PlaidTransaction, categoryMap: [String: Category], rules: [CategoryRule]) -> Transaction {
+        let description = plaidTx.merchantName ?? plaidTx.name
+        let category: Category?
+        let type: String
+
+        if let matchedRule = matchRule(for: description, rules: rules) {
+            category = matchedRule.category
+            type = plaidTx.amount >= 0 ? "expense" : "income"
+        } else {
+            let mapping = PlaidCategoryMapper.map(plaidTx.personalFinanceCategory)
+            category = categoryMap[mapping.categoryName]
+            type = resolveType(plaidAmount: plaidTx.amount, mappingType: mapping.transactionType)
+        }
+
         return Transaction(
-            descriptionText: plaidTx.merchantName ?? plaidTx.name,
+            descriptionText: description,
             amount: abs(plaidTx.amount),
             date: parseDate(plaidTx.date),
-            type: resolveType(plaidAmount: plaidTx.amount, mappingType: mapping.transactionType),
+            type: type,
             isMock: false,
             source: "plaid",
             plaidTransactionId: plaidTx.transactionId,
-            category: categoryMap[mapping.categoryName]
+            category: category
         )
     }
 
