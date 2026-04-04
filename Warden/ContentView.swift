@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var settings = SettingsViewModel()
+
     var body: some View {
         TabView {
             Tab("Dashboard", systemImage: "chart.pie") {
@@ -24,6 +26,7 @@ struct ContentView: View {
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
+        .environment(settings)
     }
 }
 

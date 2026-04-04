@@ -8,7 +8,7 @@ import SwiftData
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var viewModel = SettingsViewModel()
+    @Environment(SettingsViewModel.self) private var viewModel
     @State private var showingClearConfirm = false
     @State private var showingSampleDataConfirm = false
 
@@ -26,6 +26,17 @@ struct SettingsView: View {
                             Text(code).tag(code)
                         }
                     }
+                }
+
+                Section("Dashboard Charts") {
+                    Toggle("Spending Trends", isOn: Binding(
+                        get: { viewModel.showSpendingTrends },
+                        set: { viewModel.saveShowSpendingTrends($0) }
+                    ))
+                    Toggle("Income vs. Expenses", isOn: Binding(
+                        get: { viewModel.showIncomeExpenses },
+                        set: { viewModel.saveShowIncomeExpenses($0) }
+                    ))
                 }
 
                 Section("Notifications") {
@@ -93,4 +104,5 @@ struct SettingsView: View {
 #Preview {
     SettingsView()
         .modelContainer(for: [Transaction.self, Category.self, Budget.self, CategoryRule.self], inMemory: true)
+        .environment(SettingsViewModel())
 }
