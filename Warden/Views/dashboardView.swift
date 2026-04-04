@@ -22,12 +22,14 @@ struct DashboardView: View {
                                 viewModel.goToPreviousMonth()
                             }
                             viewModel.loadData(context: modelContext)
+                            viewModel.loadTrendData(context: modelContext)
                         },
                         onNext: {
                             withAnimation(.spring(duration: 0.4)) {
                                 viewModel.goToNextMonth()
                             }
                             viewModel.loadData(context: modelContext)
+                            viewModel.loadTrendData(context: modelContext)
                         }
                     )
 
@@ -36,7 +38,17 @@ struct DashboardView: View {
                         budget: viewModel.totalBudget
                     )
 
+                    IncomeExpenseCard(
+                        income: viewModel.totalIncome,
+                        expenses: viewModel.totalSpent
+                    )
+
                     CategoryBreakdownChart(rows: viewModel.spendingByCategory)
+
+                    MonthlyTrendsChart(
+                        dataPoints: viewModel.trendDataPoints,
+                        monthOverMonthDelta: viewModel.monthOverMonthDelta
+                    )
 
                     BudgetComparisonChart(rows: viewModel.spendingByCategory)
                 }
@@ -46,6 +58,7 @@ struct DashboardView: View {
             .navigationTitle("Dashboard")
             .onAppear {
                 viewModel.loadData(context: modelContext)
+                viewModel.loadTrendData(context: modelContext)
             }
         }
     }
