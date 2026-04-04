@@ -16,7 +16,8 @@ struct WardenApp: App {
         let schema = Schema([
             Transaction.self,
             Category.self,
-            Budget.self
+            Budget.self,
+            CategoryRule.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {

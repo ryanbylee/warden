@@ -21,6 +21,27 @@ struct TransactionsView: View {
                             .onTapGesture {
                                 viewModel.transactionToEdit = transaction
                             }
+                            .contextMenu {
+                                Menu("Recategorize") {
+                                    ForEach(viewModel.categories) { cat in
+                                        Button {
+                                            viewModel.recategorizeTransaction(transaction, to: cat, context: modelContext)
+                                        } label: {
+                                            Label(cat.name, systemImage: cat.systemIcon)
+                                        }
+                                    }
+                                }
+                                Button {
+                                    viewModel.transactionToEdit = transaction
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                Button(role: .destructive) {
+                                    viewModel.deleteTransaction(transaction, context: modelContext)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
                                     viewModel.deleteTransaction(transaction, context: modelContext)
@@ -78,6 +99,21 @@ struct TransactionsView: View {
                 }
                 .presentationDetents([.medium, .large])
             }
+            .alert("Create Category Rule?", isPresented: Binding(
+                get: { viewModel.pendingRuleSuggestion != nil },
+                set: { if !$0 { viewModel.dismissRuleSuggestion() } }
+            )) {
+                Button("Create Rule") {
+                    viewModel.createRuleFromSuggestion(context: modelContext)
+                }
+                Button("Just This Once", role: .cancel) {
+                    viewModel.dismissRuleSuggestion()
+                }
+            } message: {
+                if let suggestion = viewModel.pendingRuleSuggestion {
+                    Text("Always categorize \"\(suggestion.merchantName)\" as \(suggestion.category.name)?")
+                }
+            }
             .onAppear {
                 viewModel.loadTransactions(context: modelContext)
             }
@@ -87,5 +123,5 @@ struct TransactionsView: View {
 
 #Preview {
     TransactionsView()
-        .modelContainer(for: [Transaction.self, Category.self, Budget.self], inMemory: true)
+        .modelContainer(for: [Transaction.self, Category.self, Budget.self, CategoryRule.self], inMemory: true)
 }
