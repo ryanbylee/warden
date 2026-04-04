@@ -42,7 +42,7 @@ struct MockDataService {
         try? context.save()
     }
 
-    static func generateMockTransactions(context: ModelContext, months: Int = 3) {
+    static func generateMockTransactions(context: ModelContext, months: Int = 6) {
         let catDescriptor = FetchDescriptor<Category>()
         let categories = (try? context.fetch(catDescriptor)) ?? []
         guard !categories.isEmpty else { return }
@@ -106,15 +106,30 @@ struct MockDataService {
                 }
             }
 
-            // Add a couple of income entries
-            let incomeTransaction = Transaction(
+            // Add two paychecks per month (bi-weekly)
+            var paycheck1Components = DateComponents()
+            paycheck1Components.month = month; paycheck1Components.year = year; paycheck1Components.day = 1
+            let paycheck1Date = calendar.date(from: paycheck1Components) ?? monthDate
+            let paycheck1 = Transaction(
                 descriptionText: "Paycheck",
                 amount: 3500,
-                date: calendar.date(byAdding: .day, value: -14, to: monthDate) ?? monthDate,
+                date: paycheck1Date,
                 type: "income",
                 isMock: true
             )
-            context.insert(incomeTransaction)
+            context.insert(paycheck1)
+
+            var paycheck2Components = DateComponents()
+            paycheck2Components.month = month; paycheck2Components.year = year; paycheck2Components.day = 15
+            let paycheck2Date = calendar.date(from: paycheck2Components) ?? monthDate
+            let paycheck2 = Transaction(
+                descriptionText: "Paycheck",
+                amount: 3500,
+                date: paycheck2Date,
+                type: "income",
+                isMock: true
+            )
+            context.insert(paycheck2)
         }
 
         try? context.save()
