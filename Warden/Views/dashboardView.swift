@@ -9,6 +9,7 @@ import Charts
 
 struct DashboardView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(SettingsViewModel.self) private var settings
     @State private var viewModel = DashboardViewModel()
 
     var body: some View {
@@ -38,17 +39,21 @@ struct DashboardView: View {
                         budget: viewModel.totalBudget
                     )
 
-                    IncomeExpenseCard(
-                        income: viewModel.totalIncome,
-                        expenses: viewModel.totalSpent
-                    )
+                    if settings.showIncomeExpenses {
+                        IncomeExpenseCard(
+                            income: viewModel.totalIncome,
+                            expenses: viewModel.totalSpent
+                        )
+                    }
 
                     CategoryBreakdownChart(rows: viewModel.spendingByCategory)
 
-                    MonthlyTrendsChart(
-                        dataPoints: viewModel.trendDataPoints,
-                        monthOverMonthDelta: viewModel.monthOverMonthDelta
-                    )
+                    if settings.showSpendingTrends {
+                        MonthlyTrendsChart(
+                            dataPoints: viewModel.trendDataPoints,
+                            monthOverMonthDelta: viewModel.monthOverMonthDelta
+                        )
+                    }
 
                     BudgetComparisonChart(rows: viewModel.spendingByCategory)
                 }
@@ -67,4 +72,5 @@ struct DashboardView: View {
 #Preview {
     DashboardView()
         .modelContainer(for: [Transaction.self, Category.self, Budget.self], inMemory: true)
+        .environment(SettingsViewModel())
 }
