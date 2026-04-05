@@ -10,7 +10,6 @@ struct BudgetCategoryRow: View {
     let onSetBudget: (Double) -> Void
 
     @State private var showingEditor = false
-    @State private var budgetText: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -48,24 +47,23 @@ struct BudgetCategoryRow: View {
             }
 
             Button(row.budget == nil ? "Set Budget" : "Edit Budget") {
-                budgetText = row.budget.map { String($0.monthlyLimit) } ?? ""
                 showingEditor = true
             }
             .font(.caption)
             .buttonStyle(.glass)
         }
         .padding(.vertical, 4)
-        .alert("Set Budget for \(row.category.name)", isPresented: $showingEditor) {
-            TextField("Monthly limit", text: $budgetText)
-                .keyboardType(.decimalPad)
-            Button("Save") {
-                if let amount = Double(budgetText), amount >= 0 {
+        .sheet(isPresented: $showingEditor) {
+            BudgetEditorSheet(
+                categoryName: row.category.name,
+                categoryIcon: row.category.systemIcon,
+                categoryColor: row.category.displayColor,
+                currentBudget: row.budget?.monthlyLimit,
+                onSave: { amount in
                     onSetBudget(amount)
                 }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Enter the monthly spending limit.")
+            )
+            .presentationDetents([.height(280)])
         }
     }
 }

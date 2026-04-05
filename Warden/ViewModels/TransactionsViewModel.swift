@@ -24,6 +24,8 @@ final class TransactionsViewModel {
     var transactionToEdit: Transaction? = nil
     var pendingRuleSuggestion: RuleSuggestion? = nil
 
+    var pendingUndo: UndoState? = nil
+
     var filteredTransactions: [Transaction] {
         var result = transactions
 
@@ -109,9 +111,37 @@ final class TransactionsViewModel {
     }
 
     func deleteTransaction(_ transaction: Transaction, context: ModelContext) {
+        // Capture snapshot before deletion
+        let id = transaction.id
+        let descriptionText = transaction.descriptionText
+        let amount = transaction.amount
+        let date = transaction.date
+        let type = transaction.type
+        let isMock = transaction.isMock
+        let source = transaction.source
+        let plaidTransactionId = transaction.plaidTransactionId
+        let category = transaction.category
+
         context.delete(transaction)
         try? context.save()
         loadTransactions(context: context)
+
+        pendingUndo = UndoState(message: "Transaction deleted") {
+            let restored = Transaction(
+                id: id,
+                descriptionText: descriptionText,
+                amount: amount,
+                date: date,
+                type: type,
+                isMock: isMock,
+                source: source,
+                plaidTransactionId: plaidTransactionId,
+                category: category
+            )
+            context.insert(restored)
+            try? context.save()
+            self.loadTransactions(context: context)
+        }
     }
 
     func recategorizeTransaction(_ transaction: Transaction, to category: Category, context: ModelContext) {

@@ -8,7 +8,6 @@ import Charts
 
 struct MonthlyTrendsChart: View {
     let dataPoints: [MonthlyTrendPoint]
-    let monthOverMonthDelta: Double?
 
     private var uniqueCategories: [String] {
         Array(Set(dataPoints.map { $0.categoryName })).sorted()
@@ -30,21 +29,8 @@ struct MonthlyTrendsChart: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Spending Trends")
-                    .font(.headline)
-
-                if let delta = monthOverMonthDelta {
-                    HStack(spacing: 4) {
-                        Image(systemName: delta >= 0 ? "arrow.up.right" : "arrow.down.right")
-                            .font(.caption)
-                            .foregroundStyle(delta >= 0 ? .red : .green)
-                        Text("\(abs(delta), specifier: "%.0f")% vs last month")
-                            .font(.caption)
-                            .foregroundStyle(delta >= 0 ? .red : .green)
-                    }
-                }
-            }
+            Text("Spending Trends")
+                .font(.headline)
 
             if dataPoints.isEmpty {
                 ContentUnavailableView("No trend data", systemImage: "chart.line.uptrend.xyaxis")
@@ -90,17 +76,13 @@ struct MonthlyTrendsChart: View {
             }
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
     }
 }
 
 #Preview {
-    MonthlyTrendsChart(
-        dataPoints: previewTrendData(),
-        monthOverMonthDelta: 23.5
-    )
-    .padding()
+    MonthlyTrendsChart(dataPoints: previewTrendData())
+        .padding()
 }
 
 private func previewTrendData() -> [MonthlyTrendPoint] {

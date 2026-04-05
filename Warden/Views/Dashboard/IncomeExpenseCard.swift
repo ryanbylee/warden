@@ -16,8 +16,7 @@ struct IncomeExpenseCard: View {
             ContentUnavailableView("No data this month", systemImage: "dollarsign.circle")
                 .frame(height: 120)
                 .padding()
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
         } else {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Income vs Expenses")
@@ -25,9 +24,14 @@ struct IncomeExpenseCard: View {
 
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Income")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.down.left")
+                                .font(.caption)
+                                .foregroundStyle(.green)
+                            Text("Income")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                         Text(income, format: .currency(code: "USD"))
                             .font(.title2)
                             .fontWeight(.bold)
@@ -35,9 +39,14 @@ struct IncomeExpenseCard: View {
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("Expenses")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 4) {
+                            Text("Expenses")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
                         Text(expenses, format: .currency(code: "USD"))
                             .font(.title2)
                             .fontWeight(.bold)
@@ -52,15 +61,19 @@ struct IncomeExpenseCard: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text(netSavings, format: .currency(code: "USD"))
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(netSavings >= 0 ? .green : .red)
+                    HStack(spacing: 6) {
+                        Image(systemName: netSavings >= 0 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(netSavings >= 0 ? .green : .red)
+                        Text("\(netSavings >= 0 ? "+" : "")\(netSavings, format: .currency(code: "USD"))")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(netSavings >= 0 ? .green : .red)
+                    }
                 }
             }
             .padding()
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
         }
     }
 }

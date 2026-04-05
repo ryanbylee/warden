@@ -31,16 +31,8 @@ struct BudgetComparisonChart: View {
                             x: .value("Amount", row.spent),
                             y: .value("Category", row.category.name)
                         )
-                        .foregroundStyle(
-                            row.spent > row.budgeted
-                                ? LinearGradient(colors: [.red, .orange], startPoint: .leading, endPoint: .trailing)
-                                : LinearGradient(colors: [.green, .teal], startPoint: .leading, endPoint: .trailing)
-                        )
+                        .foregroundStyle(row.spent > row.budgeted ? Color.red : Color.green)
                         .cornerRadius(6)
-                        .shadow(
-                            color: row.spent > row.budgeted ? .red.opacity(0.3) : .clear,
-                            radius: 4
-                        )
                     }
                 }
                 .frame(height: max(Double(rows.count) * 44, 150))
@@ -54,10 +46,26 @@ struct BudgetComparisonChart: View {
                         }
                     }
                 }
+
+                let overBudget = rows.filter { $0.spent > $0.budgeted && $0.budgeted > 0 }
+                if !overBudget.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(overBudget) { row in
+                            HStack(spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                                Text("\(row.category.name) over by \((row.spent - row.budgeted).formatted(.currency(code: "USD").precision(.fractionLength(0))))")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    .padding(.top, 4)
+                }
             }
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
     }
 }

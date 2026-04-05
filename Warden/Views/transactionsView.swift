@@ -21,7 +21,13 @@ struct TransactionsView: View {
 
                 if !viewModel.filteredTransactions.isEmpty {
                     ForEach(viewModel.filteredTransactions) { transaction in
-                        TransactionRowView(transaction: transaction)
+                        TransactionRowView(
+                            transaction: transaction,
+                            categories: viewModel.categories,
+                            onRecategorize: { newCategory in
+                                viewModel.recategorizeTransaction(transaction, to: newCategory, context: modelContext)
+                            }
+                        )
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 viewModel.transactionToEdit = transaction
@@ -137,6 +143,10 @@ struct TransactionsView: View {
             }
             .onAppear {
                 viewModel.loadTransactions(context: modelContext)
+            }
+            .overlay(alignment: .bottom) {
+                UndoSnackbar(undoState: $viewModel.pendingUndo)
+                    .animation(.spring(duration: 0.3), value: viewModel.pendingUndo != nil)
             }
         }
     }

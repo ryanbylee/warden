@@ -7,6 +7,8 @@ import SwiftUI
 
 struct TransactionRowView: View {
     let transaction: Transaction
+    var categories: [Category] = []
+    var onRecategorize: ((Category) -> Void)? = nil
 
     private var categoryColor: Color {
         transaction.category?.displayColor ?? .accentColor
@@ -34,9 +36,27 @@ struct TransactionRowView: View {
                             .foregroundStyle(.secondary)
                     }
                     if let category = transaction.category {
-                        Text(category.name)
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                        if let onRecategorize {
+                            Menu {
+                                ForEach(categories) { cat in
+                                    Button { onRecategorize(cat) } label: {
+                                        Label(cat.name, systemImage: cat.systemIcon)
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 2) {
+                                    Text(category.name)
+                                        .font(.caption)
+                                    Image(systemName: "chevron.down")
+                                        .font(.system(size: 8, weight: .medium))
+                                }
+                                .foregroundStyle(.secondary)
+                            }
+                        } else {
+                            Text(category.name)
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
                     }
                     Text("·")
                         .font(.caption)

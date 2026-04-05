@@ -59,7 +59,6 @@ struct CategoryBreakdownChart: View {
             }
         }
         .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
     }
 }

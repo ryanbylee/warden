@@ -37,6 +37,7 @@ final class DashboardViewModel {
     var categories: [Category] = []
     var monthlySummaries: [MonthlySummary] = []
     var trendDataPoints: [MonthlyTrendPoint] = []
+    var isLoading: Bool = false
 
     var totalSpent: Double {
         transactions

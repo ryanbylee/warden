@@ -21,12 +21,9 @@ struct CategoryRuleFormView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Merchant") {
+                Section("Merchant name") {
                     TextField("e.g. Starbucks, Amazon", text: $merchantPattern)
-                }
-
-                Section("Match Type") {
-                    Toggle("Exact Match", isOn: $isExactMatch)
+                    Toggle("Exact name only", isOn: $isExactMatch)
                     Text(isExactMatch
                          ? "Only matches transactions with this exact name."
                          : "Matches any transaction whose name contains this text.")
@@ -34,13 +31,13 @@ struct CategoryRuleFormView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                Section("Category") {
+                Section("Assign to category") {
                     CategoryPicker(selection: $selectedCategory, categories: categories)
                 }
             }
             .scrollContentBackground(.hidden)
             .containerBackground(.clear, for: .navigation)
-            .navigationTitle("New Rule")
+            .navigationTitle("Auto-Categorize")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

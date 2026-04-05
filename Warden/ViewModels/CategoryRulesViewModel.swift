@@ -12,6 +12,7 @@ final class CategoryRulesViewModel {
     var rules: [CategoryRule] = []
     var categories: [Category] = []
     var showingAddRule: Bool = false
+    var pendingUndo: UndoState? = nil
 
     func loadRules(context: ModelContext) {
         let ruleDescriptor = FetchDescriptor<CategoryRule>(
@@ -33,8 +34,28 @@ final class CategoryRulesViewModel {
     }
 
     func deleteRule(_ rule: CategoryRule, context: ModelContext) {
+        // Capture snapshot before deletion
+        let id = rule.id
+        let merchantPattern = rule.merchantPattern
+        let isExactMatch = rule.isExactMatch
+        let createdAt = rule.createdAt
+        let category = rule.category
+
         context.delete(rule)
         try? context.save()
         loadRules(context: context)
+
+        pendingUndo = UndoState(message: "Rule deleted") {
+            let restored = CategoryRule(
+                id: id,
+                merchantPattern: merchantPattern,
+                isExactMatch: isExactMatch,
+                createdAt: createdAt,
+                category: category
+            )
+            context.insert(restored)
+            try? context.save()
+            self.loadRules(context: context)
+        }
     }
 }

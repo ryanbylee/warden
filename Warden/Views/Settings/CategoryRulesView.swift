@@ -25,7 +25,7 @@ struct CategoryRulesView: View {
                             Text(rule.merchantPattern)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                            Text(rule.isExactMatch ? "Exact match" : "Contains")
+                            Text(rule.isExactMatch ? "Exact name" : "Partial match")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -74,6 +74,10 @@ struct CategoryRulesView: View {
         }
         .onAppear {
             viewModel.loadRules(context: modelContext)
+        }
+        .overlay(alignment: .bottom) {
+            UndoSnackbar(undoState: $viewModel.pendingUndo)
+                .animation(.spring(duration: 0.3), value: viewModel.pendingUndo != nil)
         }
     }
 }
