@@ -38,6 +38,7 @@ final class DashboardViewModel {
     var monthlySummaries: [MonthlySummary] = []
     var trendDataPoints: [MonthlyTrendPoint] = []
     var isLoading: Bool = false
+    var hasAnyTransactionsEver: Bool = false
 
     var totalSpent: Double {
         transactions
@@ -124,6 +125,10 @@ final class DashboardViewModel {
             sortBy: [SortDescriptor(\.sortOrder)]
         )
         categories = (try? context.fetch(catDescriptor)) ?? []
+
+        var allTxDescriptor = FetchDescriptor<Transaction>()
+        allTxDescriptor.fetchLimit = 1
+        hasAnyTransactionsEver = ((try? context.fetch(allTxDescriptor)) ?? []).isEmpty == false
     }
 
     func loadTrendData(context: ModelContext) {
